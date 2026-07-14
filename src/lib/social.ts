@@ -62,7 +62,7 @@ export function buildSocialLinks(options: SocialLinkOptions): SocialLink[] {
 
   if (options.telegram) {
     links.push({
-      href: `https://t.me/${options.telegram}`,
+      href: `https://telegram.me/${options.telegram}`,
       title: 'Telegram',
       label: 'Telegram',
       icon: 'ri:telegram-line',

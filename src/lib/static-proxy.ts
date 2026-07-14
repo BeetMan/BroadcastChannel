@@ -1,5 +1,4 @@
 const TARGET_WHITELIST = [
-  't.me',
   'telegram.org',
   'telegram.me',
   'telegram.dog',

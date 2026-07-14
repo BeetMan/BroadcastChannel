@@ -37,7 +37,7 @@
 ## Env and deployment gotchas
 
 - `CHANNEL` is required server-side; missing it throws during Telegram fetch.
-- `TELEGRAM_HOST` defaults in code to `t.me`; `.env.example` uses `telegram.dog` as an override example.
+- `TELEGRAM_HOST` defaults in code to `telegram.me`; `.env.example` uses `telegram.dog` as an override example.
 - `STATIC_PROXY` defaults to `/static/` only when unset; set it to an empty string for direct Telegram asset URLs.
 - `PODCAST` configures the optional podcast link.
 - `astro.config.mjs` selects adapters for Vercel, Cloudflare Pages, Netlify, Node standalone, and EdgeOne; `SERVER_ADAPTER` can override detection.

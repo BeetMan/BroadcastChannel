@@ -69,7 +69,7 @@ export async function loadChannelDocument(
   params: GetChannelInfoParams & { id?: string } = {},
 ): Promise<LoadedChannelDocument> {
   const { before, after, q, id } = params
-  const host = getEnv(import.meta.env, context, 'TELEGRAM_HOST') ?? 't.me'
+  const host = getEnv(import.meta.env, context, 'TELEGRAM_HOST') ?? 'telegram.me'
   const channel = getRequiredEnv(context, 'CHANNEL')
   const staticProxy = getStaticProxy(import.meta.env, context)
   const reactionsEnabled = getBooleanEnv(import.meta.env, context, 'REACTIONS')

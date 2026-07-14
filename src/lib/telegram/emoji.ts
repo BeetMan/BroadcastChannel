@@ -16,6 +16,6 @@ export function getCustomEmojiImage(emojiId: string | undefined, staticProxy = '
     return null
   }
 
-  const imageUrl = `https://t.me/i/emoji/${emojiId}.webp`
+  const imageUrl = `https://telegram.me/i/emoji/${emojiId}.webp`
   return getProxiedUrl(staticProxy, imageUrl)
 }

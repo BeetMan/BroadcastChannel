@@ -98,7 +98,7 @@ Cloudflare Pages SSR is not supported with Astro 6 + @astrojs/cloudflare v13. Mi
 ## ⚒️ Configuration
 
 ```env
-## Telegram Channel Username, must be configured. The string of characters following t.me/
+## Telegram Channel Username, must be configured. The string of characters following telegram.me/
 CHANNEL=miantiao_me
 
 ## Language and timezone settings. Use an Intl/BCP 47 locale, for example en or zh-CN
@@ -160,10 +160,10 @@ RSS_BEAUTIFY=true
    - The channel username is a string, not a number
    - Turn off the "Restricting Saving Content" setting in the channel
    - Redeploy after modifying environment variables
-   - Telegram blocks public display of some sensitive channels, you can verify by visiting `https://t.me/s/channelusername`.
+   - Telegram blocks public display of some sensitive channels, you can verify by visiting `https://telegram.me/s/channelusername`.
 
 ## ☕ Sponsor
 
-1. [Follow me on Telegram](https://t.me/miantiao_me)
+1. [Follow me on Telegram](https://telegram.me/miantiao_me)
 2. [Follow me on 𝕏](https://404.li/kai)
 3. [Sponsor me on GitHub](https://github.com/sponsors/miantiao-me)

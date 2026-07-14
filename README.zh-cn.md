@@ -97,7 +97,7 @@ Cloudflare Pages SSR 在 Astro 6 + @astrojs/cloudflare v13 下不受支持，请
 ## ⚒️ 配置
 
 ```env
-## Telegram 频道用户名，必须配置。 t.me/ 后面那串字符
+## Telegram 频道用户名，必须配置。 telegram.me/ 后面那串字符
 CHANNEL=miantiao_me
 
 ## 语言和时区设置，语言选项使用 Intl/BCP 47 locale，例如 zh-CN 或 en
@@ -157,10 +157,10 @@ RSS_BEAUTIFY=true
    - 频道用户名是字符串，不是数字
    - 关闭频道 Restricting Saving Content 设置项
    - 修改完环境变量后需要重新部署
-   - Telegram 会屏蔽一些敏感频道的公开展示， 可以通过访问 `https://t.me/s/频道用户名` 确认
+   - Telegram 会屏蔽一些敏感频道的公开展示， 可以通过访问 `https://telegram.me/s/频道用户名` 确认
 
 ## ☕ 赞助
 
-1. [在 Telegram 关注我](https://t.me/miantiao_me)
+1. [在 Telegram 关注我](https://telegram.me/miantiao_me)
 2. [在 𝕏 上关注我](https://404.li/x)
 3. [在 GitHub 赞助我](https://github.com/sponsors/miantiao-me)
