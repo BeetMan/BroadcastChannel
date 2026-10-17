@@ -1,7 +1,5 @@
 import type { CheerioAPI } from 'cheerio'
 import type { IndexedStaticProxyOptions, MessageSelection, StaticProxyOptions } from './types'
-import flourite from 'flourite'
-import prism, { ensurePrismLanguage } from '../prism'
 import { getCustomEmojiImage } from './emoji'
 import { normalizeUrlAttribute, normalizeUrlAttributes, proxyStyleUrls } from './url'
 
@@ -14,6 +12,8 @@ interface HydrateTgEmojiOptions extends StaticProxyOptions {
   telegramHost?: string
 }
 
+const LANGUAGE_CLASS_REGEX = /(?:^|\s)language-([\w+-]+)/
+
 async function hydrateTgEmoji($: CheerioAPI, content: MessageSelection, options: HydrateTgEmojiOptions = {}): Promise<void> {
   const { telegramHost, staticProxy = '' } = options
 
@@ -24,6 +24,33 @@ async function hydrateTgEmoji($: CheerioAPI, content: MessageSelection, options:
     if (imageUrl) {
       $(emojiNode).replaceWith(`<img class="tg-emoji" src="${imageUrl}" alt="" loading="lazy" width="20" height="20" />`)
     }
+  }
+}
+
+function languageFromClass(className: string | undefined): string | undefined {
+  return className?.match(LANGUAGE_CLASS_REGEX)?.[1]
+}
+
+/**
+ * Keep `<pre>` readable without flourite or Prism. Those ran once per code
+ * block inside `extractPost` and were the heaviest part of a cache miss.
+ * Text is escaped; a `language-*` class is copied only when the source
+ * markup already declared one.
+ */
+function wrapPreAsPlainCode($: CheerioAPI, content: MessageSelection): void {
+  for (const preNode of content.find('pre').toArray()) {
+    const pre = $(preNode)
+    pre.addClass('code')
+    pre.find('br').replaceWith('\n')
+
+    const existing = pre.find('code').first()
+    const language = languageFromClass(existing.attr('class'))
+      || languageFromClass(pre.attr('class'))
+      || 'text'
+    const code = pre.text()
+    const codeEl = $(`<code class="language-${language}"></code>`)
+    codeEl.text(code)
+    pre.empty().append(codeEl)
   }
 }
 
@@ -69,34 +96,7 @@ export async function modifyHTMLContent($: CheerioAPI, content: MessageSelection
     spoiler.attr('id', spoilerId).wrap('<label class="spoiler-button"></label>').before(spoilerInput)
   }
 
-  for (const preNode of content.find('pre').toArray()) {
-    const pre = $(preNode)
-    pre.addClass('code')
-
-    try {
-      pre.find('br').replaceWith('\n')
-
-      const code = pre.text()
-      const detectedLanguage = flourite(code, { shiki: true, noUnknown: true }).language || 'text'
-      const language = await ensurePrismLanguage(detectedLanguage)
-      const grammar = prism.languages[language]
-
-      if (!grammar) {
-        const fallbackCode = $('<code class="language-text"></code>')
-        fallbackCode.text(code)
-        pre.empty().append(fallbackCode)
-        continue
-      }
-
-      const highlightedCode = prism.highlight(code, grammar, language)
-      pre.html(`<code class="language-${language}">${highlightedCode}</code>`)
-    }
-    catch (error) {
-      if (import.meta.env.DEV) {
-        console.warn('Code highlighting failed', error)
-      }
-    }
-  }
+  wrapPreAsPlainCode($, content)
 
   return content
 }
