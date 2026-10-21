@@ -34,8 +34,9 @@
 
 - `src/pages/` contains Astro pages and API-style routes; `src/pages/index.astro` is intentionally thin and calls `getChannelInfo()`.
 - `src/layouts/BaseLayout.astro` wires global CSS, `astro-seo`, the site header/navigation, RSS links, `HEADER_INJECT`, and `FOOTER_INJECT`.
-- `src/middleware.ts` sets `SITE_URL`/`RSS_URL` locals, handles legacy `#tag` search rewrites, and adds speculation/cache headers.
-- Telegram fetching/parsing belongs in `src/lib/telegram/**`; request caching uses `ocache` with 5 min max age, SWR enabled, and 1 hour stale max age.
+- `src/middleware.ts` sets `SITE_URL`/`RSS_URL` locals, redirects tracking-parameter URLs to their canonical form, handles legacy `#tag` search rewrites, and adds speculation/cache headers.
+- Telegram fetching/parsing belongs in `src/lib/telegram/**`; request caching uses `ocache` with `PAGE_CACHE_SECONDS` (15 min) max age and SWR disabled because a detached refresh has no Workers `waitUntil` context.
+- HTTP cache policy lives in `src/lib/cache-policy.ts`: the page TTL, the `stale-while-revalidate` window, and the tracking-parameter rules. Workers Cache (`cache.enabled` in `wrangler.jsonc`) serves stored HTML before the Worker runs, so the page TTL is the primary CPU lever on the Workers free plan.
 - Shared env helpers are in `src/lib/env.ts`; runtime `process.env` wins over build-time `import.meta.env`, and they do not read `Astro.locals.runtime.env`.
 - Static proxy logic is shared in `src/lib/static-proxy.ts`; both Astro route `src/pages/static/[...url].ts` and Vercel Edge Function `api/static/index.ts` use it, with `/static/:path*` rewritten by `vercel.json`.
 - Do not broaden the static proxy target whitelist unless the task explicitly changes the security model.

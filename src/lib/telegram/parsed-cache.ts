@@ -1,4 +1,5 @@
 import type { ChannelInfo } from '../../types'
+import { PAGE_CACHE_SECONDS } from '../cache-policy'
 
 /**
  * Parsed Telegram JSON in the Cloudflare SESSION KV binding.
@@ -7,14 +8,14 @@ import type { ChannelInfo } from '../../types'
  * `createMemoryStorage()`), so a warm HTML entry still re-runs cheerio on the
  * next isolate. SESSION is the KV binding the Cloudflare adapter already
  * requests for Astro sessions; keys are prefixed so they do not collide with
- * session ids. TTL matches the existing 5 minute HTML maxAge.
+ * session ids. TTL matches the page cache TTL from `cache-policy.ts`.
  *
  * `cloudflare:workers` is imported dynamically so Node, Vercel, Netlify, and
  * EdgeOne builds keep working when the module is absent. Astro 6+ removed
  * `locals.runtime.env`.
  */
 const CACHE_VERSION = 'v1'
-export const PARSED_CACHE_TTL_SECONDS = 300
+export const PARSED_CACHE_TTL_SECONDS = PAGE_CACHE_SECONDS
 const KV_KEY_LIMIT = 512
 
 export interface SessionKv {

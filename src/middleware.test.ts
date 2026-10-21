@@ -1,5 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { setHtmlCache } from './lib/html-cache'
+import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('astro:middleware', () => ({
   defineMiddleware: <T>(handler: T): T => handler,
@@ -49,74 +48,80 @@ function asResponse(response: Response | void): Response {
   return response
 }
 
-describe('middleware HTML cache', () => {
-  afterEach(() => {
-    setHtmlCache(undefined)
+function createContext(url: string) {
+  const request = new Request(url)
+  return {
+    locals: {},
+    params: {},
+    request,
+    rewrite: vi.fn(),
+    url: new URL(request.url),
+  }
+}
+
+function htmlNext(body = '<p>Page</p>') {
+  return vi.fn(async () => new Response(body, {
+    headers: { 'content-type': 'text/html; charset=utf-8' },
+  }))
+}
+
+describe('middleware tracking parameter redirects', () => {
+  it('redirects campaign-tagged pages to their canonical form', async () => {
+    const next = htmlNext()
+    const response = asResponse(await onRequest(
+      createContext('https://beet.select/posts/42?utm_source=feed&fbclid=abc&ref=home') as never,
+      next,
+    ))
+
+    expect(response.status).toBe(301)
+    expect(response.headers.get('Location')).toBe('/posts/42')
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600')
+    expect(next).not.toHaveBeenCalled()
   })
 
-  it('serves a second GET from the Cache API without rendering again', async () => {
-    const entries = new Map<string, Response>()
-    setHtmlCache({
-      async match(request: Request) {
-        const hit = entries.get(request.url)
-        return hit ? hit.clone() : undefined
-      },
-      async put(request: Request, response: Response) {
-        entries.set(request.url, response.clone())
-      },
-    })
+  it('keeps real query parameters while dropping tracking ones', async () => {
+    const response = asResponse(await onRequest(
+      createContext('https://beet.select/search?q=hello&utm_medium=social') as never,
+      htmlNext(),
+    ))
 
-    const request = new Request('https://beet.select/posts/42')
-    const next = vi.fn(async () => new Response('<p>Post</p>', {
-      headers: { 'content-type': 'text/html; charset=utf-8' },
-    }))
-    const context = {
-      locals: {},
-      params: {},
-      request,
-      rewrite: vi.fn(),
-      url: new URL(request.url),
+    expect(response.status).toBe(301)
+    expect(response.headers.get('Location')).toBe('/search?q=hello')
+  })
+
+  it('leaves canonical pages, feeds, and assets untouched', async () => {
+    const urls = [
+      'https://beet.select/posts/42',
+      'https://beet.select/rss.xml?utm_source=feed',
+      'https://beet.select/static/a.jpg?utm_source=feed',
+    ]
+
+    for (const url of urls) {
+      const next = htmlNext()
+      const response = asResponse(await onRequest(createContext(url) as never, next))
+      expect(response.status).toBe(200)
+      expect(next).toHaveBeenCalledTimes(1)
     }
+  })
+})
 
-    const first = asResponse(await onRequest(context as never, next))
-    const second = asResponse(await onRequest(context as never, next))
+describe('middleware default cache header', () => {
+  it('applies the shared page cache policy with stale-while-revalidate', async () => {
+    const response = asResponse(await onRequest(createContext('https://beet.select/') as never, htmlNext()))
 
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(first.headers.get('X-BC-Cache')).toBe('MISS')
-    expect(first.headers.get('Cache-Control')).toContain('s-maxage=300')
-    expect(second.headers.get('X-BC-Cache')).toBe('HIT')
-    expect(await second.text()).toBe('<p>Post</p>')
-    expect(await first.text()).toBe('<p>Post</p>')
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=900, s-maxage=900, stale-while-revalidate=60')
+    expect(response.headers.get('Speculation-Rules')).toBe('"/rules/prefetch.json"')
   })
 
-  it('defers the cache write with the Workers execution context', async () => {
-    const writes: Promise<unknown>[] = []
-    setHtmlCache({
-      async match() {
-        return undefined
+  it('keeps cache headers set by the route itself', async () => {
+    const next = vi.fn(async () => new Response('<rss/>', {
+      headers: {
+        'cache-control': 'public, max-age=3600',
+        'content-type': 'text/html; charset=utf-8',
       },
-      async put() {},
-    })
-    const request = new Request('https://beet.select/')
-    const next = vi.fn(async () => new Response('<p>Home</p>', {
-      headers: { 'content-type': 'text/html; charset=utf-8' },
     }))
-    const response = asResponse(await onRequest({
-      locals: {
-        cfContext: {
-          waitUntil(promise: Promise<unknown>) {
-            writes.push(promise)
-          },
-        },
-      },
-      params: {},
-      request,
-      rewrite: vi.fn(),
-      url: new URL(request.url),
-    } as never, next))
+    const response = asResponse(await onRequest(createContext('https://beet.select/rss.xml') as never, next))
 
-    expect(response.headers.get('X-BC-Cache')).toBe('MISS')
-    expect(writes).toHaveLength(1)
-    await writes[0]
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600')
   })
 })

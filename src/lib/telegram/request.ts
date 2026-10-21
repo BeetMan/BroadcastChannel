@@ -3,6 +3,7 @@ import type { LoadedChannelDocument } from './types'
 import * as cheerio from 'cheerio'
 import { defineCachedFunction } from 'ocache'
 import { $fetch } from 'ofetch'
+import { PAGE_CACHE_SECONDS } from '../cache-policy'
 import { getBooleanEnv, getEnv, getStaticProxy, getTelegramHost } from '../env'
 
 interface TelegramHtmlParams {
@@ -43,15 +44,16 @@ async function fetchTelegramHtml({ host, channel, id, before, after, q, headers 
       q: q || undefined,
     },
     responseType: 'text',
-    timeout: 15000,
-    retry: 3,
-    retryDelay: 100,
+    timeout: 8000,
+    // Retries burn CPU on the Workers free plan without producing a response.
+    retry: 1,
+    retryDelay: 200,
   })
 }
 
 const loadTelegramHtml = defineCachedFunction(fetchTelegramHtml, {
   name: 'telegram-html',
-  maxAge: 60 * 5,
+  maxAge: PAGE_CACHE_SECONDS,
   // A detached refresh has no Cloudflare waitUntil context and can leave a stuck pending promise.
   swr: false,
   getKey: ({ host, channel, id, before, after, q }) => JSON.stringify({

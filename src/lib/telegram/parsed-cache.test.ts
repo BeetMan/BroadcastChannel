@@ -62,7 +62,7 @@ describe('parsed telegram cache', () => {
     })).toBe('bc:parsed:v1:post:demo:42:telegram.dog::1')
   })
 
-  it('round-trips JSON in the injected KV with a 300 second TTL', async () => {
+  it('round-trips JSON in the injected KV with the page cache TTL', async () => {
     const { entries, kv } = memoryKv()
     setParsedCacheKv(kv)
     const key = channelPostCacheKey({ channel: 'demo', id: '7' })
