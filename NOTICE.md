@@ -54,10 +54,10 @@ The optional `public/themes/hn-news.css` theme takes visual inspiration from the
 
 ## TG Channel theme
 
-The optional `public/themes/tg-channel.css` theme takes visual inspiration from Telegram's public channel preview, using [Broadcast Channel Blog](https://t.me/s/Broadcast_Channel_Blog) as the reference instance. It is an independent implementation for BroadcastChannel's DOM, not an adaptation of Telegram source material. No Telegram source code, CSS, fonts, or assets are copied or bundled.
+The optional `public/themes/tg-channel.css` theme takes visual inspiration from Telegram's public channel preview, using [Broadcast Channel Blog](https://telegram.me/s/Broadcast_Channel_Blog) as the reference instance. It is an independent implementation for BroadcastChannel's DOM, not an adaptation of Telegram source material. No Telegram source code, CSS, fonts, or assets are copied or bundled.
 
-- Visual reference: https://t.me/s/Broadcast_Channel_Blog
-- Official public preview base: https://t.me/s/
+- Visual reference: https://telegram.me/s/Broadcast_Channel_Blog
+- Official public preview base: https://telegram.me/s/
 - Copyright holder: Telegram Messenger Inc.
 - License: N/A — no open-source license applies to the referenced public preview visual design
 - License URL: N/A (not applicable); official terms: https://telegram.org/tos

@@ -60,7 +60,7 @@ Cloudflare Pages SSR 在当前 Astro 6 + @astrojs/cloudflare v13 下不受支持
 - 可选主题灵感：[Terminal](https://github.com/panr/hugo-theme-terminal)
 - 可选主题灵感：[Aria](https://github.com/miantiao-me/astro-aria)
 - 可选主题视觉灵感：[Hacker News](https://news.ycombinator.com/)（由 Y Combinator 运营，独立实现，与其无官方关系）
-- 可选主题视觉灵感：[Telegram 公开频道预览](https://t.me/s/)（独立实现，与 Telegram Messenger Inc. 无官方关系）
+- 可选主题视觉灵感：[Telegram 公开频道预览](https://telegram.me/s/)（独立实现，与 Telegram Messenger Inc. 无官方关系）
 - 可选主题视觉灵感：[Zed 的 Agentic Engineering 页面](https://zed.dev/agentic-engineering)（独立实现，与 Zed Industries, Inc. 无官方关系）
 - 原创可选主题：Polar（项目自有设计，无外部视觉上游）
 
@@ -102,7 +102,7 @@ Cloudflare Pages SSR 在 Astro 6 + @astrojs/cloudflare v13 下不受支持，请
 
 ### 最小配置
 
-只需配置 `CHANNEL`：公开 Telegram 频道用户名（`t.me/` 后面那串字符）。
+只需配置 `CHANNEL`：公开 Telegram 频道用户名（`telegram.me/` 后面那串字符）。
 
 ```env
 CHANNEL=miantiao_me
@@ -194,10 +194,10 @@ HN News、TG Channel、ZAE 和 Polar 是固定浅色主题。不要直接加载 
    - 频道用户名是**字符串**，不是数字
    - 关闭频道 **Restricting Saving Content** 设置
    - 修改环境变量后需要**重新部署**
-   - Telegram 会屏蔽部分敏感频道的公开展示，可访问 `https://t.me/s/频道用户名` 确认
+   - Telegram 会屏蔽部分敏感频道的公开展示，可访问 `https://telegram.me/s/频道用户名` 确认
 
 ## ☕ 赞助
 
-1. [在 Telegram 关注我](https://t.me/miantiao_me)
+1. [在 Telegram 关注我](https://telegram.me/miantiao_me)
 2. [在 𝕏 上关注我](https://404.li/x)
 3. [在 GitHub 赞助我](https://github.com/sponsors/miantiao-me)

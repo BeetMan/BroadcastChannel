@@ -10,7 +10,7 @@ export function getReply($: CheerioAPI, message: MessageSelection, options: Repl
 
   const href = reply.attr('href')
   if (href) {
-    const replyUrl = new URL(normalizeUrlAttribute(href), 'https://t.me')
+    const replyUrl = new URL(normalizeUrlAttribute(href), 'https://telegram.me')
     reply.attr('href', replyUrl.pathname.replace(new RegExp(`/${channel}/`, 'i'), '/posts/'))
   }
 
