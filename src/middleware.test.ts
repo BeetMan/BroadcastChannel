@@ -1,10 +1,19 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { setHtmlCache, setPlatformWaitUntil } from './lib/html-cache'
 
 vi.mock('astro:middleware', () => ({
   defineMiddleware: <T>(handler: T): T => handler,
 }))
 
 const { isHtmlResponse, onRequest, shouldApplyDefaultCache } = await import('./middleware')
+
+setPlatformWaitUntil(null)
+
+afterEach(() => {
+  setHtmlCache(undefined)
+  setPlatformWaitUntil(null)
+  vi.unstubAllGlobals()
+})
 
 describe('middleware response header helpers', () => {
   it('applies default cache to successful responses without cache headers', () => {
@@ -110,6 +119,7 @@ describe('middleware default cache header', () => {
     const response = asResponse(await onRequest(createContext('https://beet.select/') as never, htmlNext()))
 
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=900, s-maxage=900, stale-while-revalidate=60')
+    expect(response.headers.get('X-BC-Cache')).toBe('MISS')
     expect(response.headers.get('Speculation-Rules')).toBe('"/rules/prefetch.json"')
   })
 
@@ -123,5 +133,100 @@ describe('middleware default cache header', () => {
     const response = asResponse(await onRequest(createContext('https://beet.select/rss.xml') as never, next))
 
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600')
+    expect(response.headers.get('X-BC-Cache')).toBeNull()
+  })
+})
+
+describe('middleware HTML cache', () => {
+  it('serves a second GET from the Cache API without rendering again', async () => {
+    setPlatformWaitUntil(null)
+    const entries = new Map<string, Response>()
+    setHtmlCache({
+      async match(request: Request) {
+        const hit = entries.get(request.url)
+        return hit ? hit.clone() : undefined
+      },
+      async put(request: Request, response: Response) {
+        entries.set(request.url, response.clone())
+      },
+    })
+
+    const request = new Request('https://beet.select/posts/42')
+    const next = vi.fn(async () => new Response('<p>Post</p>', {
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    }))
+    const context = {
+      locals: {},
+      params: {},
+      request,
+      rewrite: vi.fn(),
+      url: new URL(request.url),
+    }
+
+    const first = asResponse(await onRequest(context as never, next))
+    const second = asResponse(await onRequest(context as never, next))
+
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(first.headers.get('X-BC-Cache')).toBe('MISS')
+    expect(first.headers.get('Cache-Control')).toBe('public, max-age=900, s-maxage=900, stale-while-revalidate=60')
+    expect(second.headers.get('X-BC-Cache')).toBe('HIT')
+    expect(await second.text()).toBe('<p>Post</p>')
+    expect(await first.text()).toBe('<p>Post</p>')
+  })
+
+  it('defers the cache write with the Workers execution context', async () => {
+    const writes: Promise<unknown>[] = []
+    const bareWaitUntil = vi.fn()
+    vi.stubGlobal('waitUntil', bareWaitUntil)
+    setHtmlCache({
+      async match() {
+        return undefined
+      },
+      async put() {},
+    })
+    const request = new Request('https://beet.select/')
+    const next = vi.fn(async () => new Response('<p>Home</p>', {
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    }))
+    const cfContext = {
+      waitUntil(promise: Promise<unknown>) {
+        expect(this).toBe(cfContext)
+        writes.push(promise)
+      },
+    }
+    const response = asResponse(await onRequest({
+      locals: { cfContext },
+      params: {},
+      request,
+      rewrite: vi.fn(),
+      url: new URL(request.url),
+    } as never, next))
+
+    expect(response.headers.get('X-BC-Cache')).toBe('MISS')
+    expect(writes).toHaveLength(1)
+    expect(bareWaitUntil).not.toHaveBeenCalled()
+    await writes[0]
+  })
+
+  it('does not render a tracking URL or store it', async () => {
+    const puts: string[] = []
+    setHtmlCache({
+      async match() {
+        return undefined
+      },
+      async put(request: Request) {
+        puts.push(request.url)
+      },
+    })
+    const next = htmlNext()
+    const response = asResponse(await onRequest(
+      createContext('https://beet.select/posts/42?utm_source=feed') as never,
+      next,
+    ))
+
+    expect(response.status).toBe(301)
+    expect(next).not.toHaveBeenCalled()
+    expect(puts).toEqual([])
+    expect(response.headers.get('X-BC-Cache')).toBeNull()
   })
 })

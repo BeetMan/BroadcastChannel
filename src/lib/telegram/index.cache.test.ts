@@ -23,18 +23,24 @@ const { setParsedCacheKv } = await import('./parsed-cache')
 
 function memoryKv() {
   const entries = new Map<string, string>()
+  const gets: string[] = []
+  const puts: string[] = []
   return {
     entries,
+    gets,
+    puts,
     kv: {
       async get(key: string, type: 'json') {
+        gets.push(key)
         const value = entries.get(key)
         if (value == null)
           return null
 
         return type === 'json' ? JSON.parse(value) as unknown : value
       },
-      async put(key: string, value: string) {
-        entries.set(key, value)
+      async put(key: string) {
+        puts.push(key)
+        throw new Error(`parsed cache must not put ${key}`)
       },
     },
   }
@@ -78,23 +84,32 @@ describe('parsed channel cache', () => {
     setParsedCacheKv(undefined)
   })
 
-  it('parses a channel once and serves the next call from KV', async () => {
+  it('reads an existing channel payload and does not put on a miss', async () => {
     vi.stubEnv('CHANNEL', 'demo')
-    const { entries, kv } = memoryKv()
+    const { entries, gets, puts, kv } = memoryKv()
     setParsedCacheKv(kv)
     vi.mocked(loadChannelDocument).mockResolvedValue(channelDocument() as never)
     vi.mocked(extractPost)
       .mockResolvedValueOnce(createPost('older'))
       .mockResolvedValueOnce(createPost('newer'))
 
-    const first = await getChannelInfo()
-    const second = await getChannelInfo()
-
-    expect(first.posts.map(post => post.id)).toEqual(['newer', 'older'])
-    expect(second).toEqual(first)
-    expect(loadChannelDocument).toHaveBeenCalledTimes(1)
+    const parsed = await getChannelInfo()
+    expect(parsed.posts.map(post => post.id)).toEqual(['newer', 'older'])
     expect(modifyHTMLContent).toHaveBeenCalledTimes(1)
-    expect(entries.size).toBe(1)
+    expect(puts).toEqual([])
+    expect(entries.size).toBe(0)
+    expect(gets[0]).toMatch(/^bc:parsed:v1:info:/)
+
+    entries.set(gets[0], JSON.stringify({
+      ...parsed,
+      title: 'From KV',
+    }))
+    vi.mocked(loadChannelDocument).mockClear()
+
+    const cached = await getChannelInfo()
+    expect(cached.title).toBe('From KV')
+    expect(loadChannelDocument).not.toHaveBeenCalled()
+    expect(puts).toEqual([])
   })
 
   it('shares one in-flight parse across concurrent callers', async () => {
@@ -119,25 +134,34 @@ describe('parsed channel cache', () => {
     expect(loadChannelDocument).toHaveBeenCalledTimes(1)
   })
 
-  it('caches a single post without re-fetching Telegram HTML', async () => {
+  it('serves a stored post from KV and parses a miss without putting', async () => {
     vi.stubEnv('CHANNEL', 'demo')
-    setParsedCacheKv(memoryKv().kv)
+    const { entries, gets, puts, kv } = memoryKv()
+    setParsedCacheKv(kv)
     vi.mocked(loadChannelDocument).mockResolvedValue(channelDocument() as never)
     vi.mocked(extractPost).mockResolvedValue(createPost('99'))
 
     expect(await getChannelPost('99')).toMatchObject({ id: '99' })
+    expect(puts).toEqual([])
+    expect(gets[0]).toMatch(/^bc:parsed:v1:post:/)
+    entries.set(gets[0], JSON.stringify(createPost('99')))
+    vi.mocked(loadChannelDocument).mockClear()
+
     expect(await getChannelPost('99')).toMatchObject({ id: '99' })
-    expect(loadChannelDocument).toHaveBeenCalledTimes(1)
+    expect(loadChannelDocument).not.toHaveBeenCalled()
+    expect(puts).toEqual([])
   })
 
   it('does not cache a post that cannot be rendered', async () => {
     vi.stubEnv('CHANNEL', 'demo')
-    setParsedCacheKv(memoryKv().kv)
+    const { puts, kv } = memoryKv()
+    setParsedCacheKv(kv)
     vi.mocked(loadChannelDocument).mockResolvedValue(channelDocument() as never)
     vi.mocked(extractPost).mockResolvedValue({ ...createPost(''), type: 'service' })
 
     expect(await getChannelPost('1')).toBeNull()
     expect(await getChannelPost('1')).toBeNull()
     expect(loadChannelDocument).toHaveBeenCalledTimes(2)
+    expect(puts).toEqual([])
   })
 })

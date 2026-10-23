@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware'
 import { getPageCacheControl, isCacheableHtmlPath, stripTrackingParams } from './lib/cache-policy'
+import { matchCachedHtml, scheduleCachePut, shouldStoreHtml, storeCachedHtml, withHtmlCacheStatus } from './lib/html-cache'
 
 function getEncodedTagSearchQuery(pathname: string): string {
   if (!pathname.startsWith('/search/%23')) {
@@ -53,6 +54,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.RSS_PREFIX = `${tag} | `
   }
 
+  if (isCacheableHtmlPath(context.url.pathname)) {
+    const cached = await matchCachedHtml(context.request, context.url.pathname)
+    if (cached)
+      return withHtmlCacheStatus(cached, 'HIT')
+  }
+
   const response = legacyTagSearch
     ? await context.rewrite(`/search/result?q=${encodeURIComponent(legacyTagSearch)}`)
     : await next()
@@ -64,6 +71,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     if (shouldApplyDefaultCache(response)) {
       response.headers.set('Cache-Control', getPageCacheControl())
+    }
+
+    if (shouldStoreHtml(context.request, context.url.pathname, response)) {
+      response.headers.set('X-BC-Cache', 'MISS')
+      const put = storeCachedHtml(context.request, context.url.pathname, response)
+      await scheduleCachePut(context.locals, put)
     }
   }
 

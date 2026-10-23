@@ -6,6 +6,13 @@ declare namespace App {
     SITE_URL: string
     RSS_URL: string
     RSS_PREFIX: string
+    /**
+     * Worker `ExecutionContext` set by `@astrojs/cloudflare`.
+     * Present only on the Workers runtime. `waitUntil` must stay bound to it.
+     */
+    cfContext?: {
+      waitUntil?: (promise: Promise<unknown>) => void
+    }
   }
 }
 
@@ -34,8 +41,8 @@ declare module 'sanitize-html' {
   export default sanitizeHtml
 }
 
-// Present only in the Cloudflare Workers runtime. Parsed-post caching imports
-// it dynamically so other adapters still build.
+// Present only in the Cloudflare Workers runtime. Parsed-post reads and the
+// Cache API `waitUntil` fallback import it dynamically so other adapters build.
 declare module 'cloudflare:workers' {
   interface WorkersEnv {
     SESSION?: {
@@ -45,4 +52,6 @@ declare module 'cloudflare:workers' {
   }
 
   export const env: WorkersEnv
+
+  export function waitUntil(promise: Promise<unknown>): void
 }
