@@ -1,26 +1,23 @@
 import type { ChannelInfo } from '../../types'
-import { PAGE_CACHE_SECONDS } from '../cache-policy'
 
 /**
- * Parsed Telegram JSON in the Cloudflare SESSION KV binding.
+ * Read-only lookup of parsed Telegram JSON in the Cloudflare SESSION KV binding.
  *
- * ocache's telegram-html cache uses isolate-local memory (`useStorage()` →
- * `createMemoryStorage()`), so a warm HTML entry still re-runs cheerio on the
- * next isolate. SESSION is the KV binding the Cloudflare adapter already
- * requests for Astro sessions; keys are prefixed so they do not collide with
- * session ids. TTL matches the page cache TTL from `cache-policy.ts`.
+ * Cold parses used to `put` `bc:parsed:*` keys on every miss. The Workers free
+ * plan allows 1,000 KV writes per day, and this binding is also what Astro
+ * sessions use, so those cache puts exhausted the quota and then failed open.
+ * HTML is cached separately (Workers Cache plus the Cache API). Existing keys
+ * are still honored until they expire; this module never writes.
  *
  * `cloudflare:workers` is imported dynamically so Node, Vercel, Netlify, and
  * EdgeOne builds keep working when the module is absent. Astro 6+ removed
  * `locals.runtime.env`.
  */
 const CACHE_VERSION = 'v1'
-export const PARSED_CACHE_TTL_SECONDS = PAGE_CACHE_SECONDS
 const KV_KEY_LIMIT = 512
 
 export interface SessionKv {
   get: (key: string, type: 'json') => Promise<unknown>
-  put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>
 }
 
 interface WorkersModule {
@@ -45,7 +42,7 @@ async function loadPlatformKv(): Promise<SessionKv | null> {
     const specifier = 'cloudflare:workers'
     const mod = await import(/* @vite-ignore */ specifier) as WorkersModule
     const kv = mod.env?.SESSION
-    platformKv = kv && typeof kv.get === 'function' && typeof kv.put === 'function' ? kv : null
+    platformKv = kv && typeof kv.get === 'function' ? kv : null
   }
   catch {
     platformKv = null
@@ -132,18 +129,5 @@ export async function readParsedJson<T>(key: string): Promise<T | null> {
   }
   catch {
     return null
-  }
-}
-
-export async function writeParsedJson(key: string, value: unknown, ttlSeconds = PARSED_CACHE_TTL_SECONDS): Promise<void> {
-  const kv = await getSessionKv()
-  if (!kv)
-    return
-
-  try {
-    await kv.put(key, JSON.stringify(value), { expirationTtl: ttlSeconds })
-  }
-  catch {
-    // A cache write must not fail the page.
   }
 }

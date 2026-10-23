@@ -7,7 +7,6 @@ import {
   channelPostCacheKey,
   isCachedChannelInfo,
   readParsedJson,
-  writeParsedJson,
 } from './parsed-cache'
 import { loadChannelDocument } from './request'
 import { normalizeUrlAttribute } from './url'
@@ -43,7 +42,7 @@ function parsedCacheIdentity(channel: string): ParsedCacheIdentity {
   }
 }
 
-async function loadChannelInfo(params: GetChannelInfoParams, cacheKey: string): Promise<ChannelInfo> {
+async function loadChannelInfo(params: GetChannelInfoParams): Promise<ChannelInfo> {
   const { before = '', after = '', q = '' } = params
   const { $, channel, telegramHost, staticProxy, reactionsEnabled } = await loadChannelDocument({ before, after, q })
   const postNodes = $('.tgme_channel_history .tgme_widget_message_wrap').toArray()
@@ -62,13 +61,13 @@ async function loadChannelInfo(params: GetChannelInfoParams, cacheKey: string): 
     avatar: avatar ? normalizeUrlAttribute(avatar) : avatar,
   }
 
-  await writeParsedJson(cacheKey, channelInfo)
   return channelInfo
 }
 
 export async function getChannelPost(id: string): Promise<Post | null> {
   const identity = parsedCacheIdentity(requiredChannel())
   const cacheKey = channelPostCacheKey({ ...identity, id })
+  // Existing bc:parsed keys are readable. Misses are not written back to SESSION.
   const cached = await readParsedJson<Post>(cacheKey)
   if (isRenderablePost(cached))
     return cached
@@ -80,11 +79,7 @@ export async function getChannelPost(id: string): Promise<Post | null> {
   const promise = loadChannelDocument({ id })
     .then(async ({ $, channel, telegramHost, staticProxy, reactionsEnabled }) => {
       const post = await extractPost($, null, { channel, telegramHost, staticProxy, reactionsEnabled })
-      const result = isRenderablePost(post) ? post : null
-      if (result)
-        await writeParsedJson(cacheKey, result)
-
-      return result
+      return isRenderablePost(post) ? post : null
     })
     .finally(() => {
       inflightChannelPost.delete(cacheKey)
@@ -98,6 +93,7 @@ export async function getChannelInfo(params: GetChannelInfoParams = {}): Promise
   const { before = '', after = '', q = '' } = params
   const identity = parsedCacheIdentity(requiredChannel())
   const cacheKey = channelInfoCacheKey({ ...identity, before, after, q })
+  // Existing bc:parsed keys are readable. Misses are not written back to SESSION.
   const cached = await readParsedJson<ChannelInfo>(cacheKey)
   if (isCachedChannelInfo(cached))
     return cached
@@ -106,7 +102,7 @@ export async function getChannelInfo(params: GetChannelInfoParams = {}): Promise
   if (pending)
     return pending
 
-  const promise = loadChannelInfo(params, cacheKey).finally(() => {
+  const promise = loadChannelInfo(params).finally(() => {
     inflightChannelInfo.delete(cacheKey)
   })
   inflightChannelInfo.set(cacheKey, promise)
