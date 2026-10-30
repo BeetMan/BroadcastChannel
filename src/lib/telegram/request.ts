@@ -66,16 +66,17 @@ const loadTelegramHtml = defineCachedFunction(fetchTelegramHtml, {
   }),
 })
 
-export async function loadChannelDocument(
+/**
+ * Raw Telegram HTML without a cheerio parse. Callers that only need a few
+ * attributes (the sitemap) use this to stay cheap on the Workers CPU budget.
+ */
+export async function loadChannelHtml(
   params: GetChannelInfoParams & { id?: string } = {},
-): Promise<LoadedChannelDocument> {
+): Promise<{ html: string, channel: string }> {
   const { before, after, q, id } = params
-  const host = getTelegramHost(import.meta.env)
   const channel = getRequiredEnv('CHANNEL')
-  const staticProxy = getStaticProxy(import.meta.env)
-  const reactionsEnabled = getBooleanEnv(import.meta.env, 'REACTIONS')
   const html = await loadTelegramHtml({
-    host,
+    host: getTelegramHost(import.meta.env),
     channel,
     id,
     before,
@@ -84,11 +85,19 @@ export async function loadChannelDocument(
     headers: getTelegramRequestHeaders(),
   })
 
+  return { html, channel }
+}
+
+export async function loadChannelDocument(
+  params: GetChannelInfoParams & { id?: string } = {},
+): Promise<LoadedChannelDocument> {
+  const { html, channel } = await loadChannelHtml(params)
+
   return {
     $: cheerio.load(html, {}, false),
     channel,
-    telegramHost: host,
-    staticProxy,
-    reactionsEnabled,
+    telegramHost: getTelegramHost(import.meta.env),
+    staticProxy: getStaticProxy(import.meta.env),
+    reactionsEnabled: getBooleanEnv(import.meta.env, 'REACTIONS'),
   }
 }

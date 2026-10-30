@@ -1,18 +1,20 @@
 import type { APIRoute } from 'astro'
+import { getSitemapCacheControl } from '../../lib/cache-policy'
 import { getSitemapUrl, resolveSiteUrl } from '../../lib/seo'
-import { getChannelInfo } from '../../lib/telegram'
+import { getSitemapPageEntries, parseSitemapCursor } from '../../lib/telegram/sitemap'
 
 export const GET: APIRoute = async (Astro) => {
-  const siteUrl = resolveSiteUrl(Astro.locals.SITE_URL, Astro.url.origin)
-  const channel = await getChannelInfo({
-    before: Astro.params.cursor,
-  })
-  const posts = channel.posts || []
+  const cursor = parseSitemapCursor(Astro.params.cursor)
+  if (!cursor)
+    return new Response('Not found', { status: 404 })
 
-  const xmlUrls = posts.map(post => `
+  const siteUrl = resolveSiteUrl(Astro.locals.SITE_URL, Astro.url.origin)
+  const entries = await getSitemapPageEntries(cursor)
+
+  const xmlUrls = entries.map(entry => `
     <url>
-      <loc>${getSitemapUrl(siteUrl, `posts/${post.id}`)}</loc>
-      <lastmod>${new Date(post.datetime).toISOString()}</lastmod>
+      <loc>${getSitemapUrl(siteUrl, `posts/${entry.id}`)}</loc>
+      <lastmod>${new Date(entry.datetime).toISOString()}</lastmod>
     </url>
   `).join('')
 
@@ -21,7 +23,7 @@ export const GET: APIRoute = async (Astro) => {
   ${xmlUrls}
 </urlset>`, {
     headers: {
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': getSitemapCacheControl(entries[0]?.datetime),
       'Content-Type': 'application/xml',
     },
   })

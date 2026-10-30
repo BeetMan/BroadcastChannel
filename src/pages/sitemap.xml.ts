@@ -1,28 +1,16 @@
 import type { APIRoute } from 'astro'
+import { getMetadataCacheControl } from '../lib/cache-policy'
 import { getSitemapUrl, resolveSiteUrl } from '../lib/seo'
-import { getChannelInfo } from '../lib/telegram'
+import { getLatestSitemapEntries, getSitemapCursors } from '../lib/telegram/sitemap'
 
 export const GET: APIRoute = async (Astro) => {
   const siteUrl = resolveSiteUrl(Astro.locals.SITE_URL, Astro.url.origin)
-  const channel = await getChannelInfo()
-  const posts = channel.posts || []
+  const entries = await getLatestSitemapEntries()
 
-  const pageSize = 20
-  let count = Number(posts[0]?.id)
-
-  const pages: number[] = []
-  if (Number.isFinite(count) && count > 0) {
-    pages.push(count)
-    while (count > pageSize) {
-      count -= pageSize
-      pages.push(count)
-    }
-  }
-
-  const sitemaps = pages.map((page) => {
+  const sitemaps = getSitemapCursors(entries[0]?.id ?? 0).map((cursor) => {
     return `
 <sitemap>
-  <loc>${getSitemapUrl(siteUrl, `sitemap/${page}.xml`)}</loc>
+  <loc>${getSitemapUrl(siteUrl, `sitemap/${cursor}.xml`)}</loc>
 </sitemap>`
   })
 
@@ -31,7 +19,7 @@ export const GET: APIRoute = async (Astro) => {
   ${sitemaps.join('')}
 </sitemapindex>`, {
     headers: {
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': getMetadataCacheControl(),
       'Content-Type': 'application/xml',
     },
   })

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   getPageCacheControl,
+  getSitemapCacheControl,
   isCacheableHtmlPath,
   isTrackingParam,
   PAGE_CACHE_SECONDS,
@@ -52,5 +53,19 @@ describe('cache policy', () => {
   it('returns null when the URL is already canonical', () => {
     expect(stripTrackingParams('https://beet.select/posts/42')).toBeNull()
     expect(stripTrackingParams('https://beet.select/search?q=hello')).toBeNull()
+  })
+})
+
+describe('sitemap cache policy', () => {
+  const now = Date.parse('2026-10-30T00:00:00Z')
+
+  it('keeps settled sitemap pages at the edge for 30 days', () => {
+    expect(getSitemapCacheControl('2026-10-01T00:00:00+00:00', now)).toContain('s-maxage=2592000')
+  })
+
+  it('keeps recent, empty, or undated pages fresh', () => {
+    expect(getSitemapCacheControl('2026-10-29T00:00:00+00:00', now)).toContain('s-maxage=3600')
+    expect(getSitemapCacheControl(undefined, now)).toContain('s-maxage=3600')
+    expect(getSitemapCacheControl('not a date', now)).toContain('s-maxage=3600')
   })
 })

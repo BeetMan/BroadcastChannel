@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro'
+import { getMetadataCacheControl } from '../lib/cache-policy'
 import { getStaticProxy } from '../lib/env'
 import { getChannelInfo } from '../lib/telegram'
 
@@ -53,7 +54,7 @@ export const GET: APIRoute = async (context) => {
   return new Response(JSON.stringify(manifest, null, 2), {
     headers: {
       'Content-Type': 'application/manifest+json; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': getMetadataCacheControl(),
     },
   })
 }
