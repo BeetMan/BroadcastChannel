@@ -1,0 +1,182 @@
+/* Beet Paper: editorial override with the Rail mint palette for BroadcastChannel Base. Follows the system light/dark preference. */
+:root {
+  --width: 720px;
+  --body-padding-inline: 1.5rem;
+  --font-main: ui-serif, 'Songti SC', 'Noto Serif CJK SC', 'Source Han Serif SC', Georgia, serif;
+  --font-secondary:
+    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC', 'Noto Sans CJK SC', 'Segoe UI', sans-serif;
+  --background-color: oklch(98.5% 0.004 160);
+  --heading-color: oklch(22% 0.02 170);
+  --text-color: oklch(32% 0.015 170);
+  --link-color: oklch(50% 0.11 165);
+  --visited-color: oklch(46% 0.08 200);
+  --feed-meta-visited-color: oklch(52% 0.02 170);
+  --code-background-color: oklch(95% 0.01 165);
+  --code-color: oklch(26% 0.02 170);
+  --blockquote-color: oklch(40% 0.015 170);
+  --accent-color: oklch(62% 0.14 160);
+  --border-color: oklch(30% 0.02 170 / 12%);
+  --link-hover-color: oklch(40% 0.11 165);
+  --muted-color: oklch(54% 0.015 170);
+  --surface-color: #fff;
+  --radius-panel: 6px;
+  --radius-chip: 999px;
+  --radius-media: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: oklch(18% 0.012 180);
+    --heading-color: oklch(95% 0.01 160);
+    --text-color: oklch(83% 0.01 160);
+    --link-color: oklch(78% 0.12 160);
+    --visited-color: oklch(74% 0.08 200);
+    --feed-meta-visited-color: oklch(65% 0.015 170);
+    --code-background-color: oklch(22% 0.014 180);
+    --code-color: oklch(88% 0.01 160);
+    --blockquote-color: oklch(78% 0.01 160);
+    --accent-color: oklch(76% 0.14 160);
+    --border-color: oklch(90% 0.02 160 / 12%);
+    --link-hover-color: oklch(86% 0.09 160);
+    --muted-color: oklch(66% 0.015 170);
+    --surface-color: oklch(21% 0.013 180);
+  }
+}
+
+body {
+  padding-inline: var(--body-padding-inline);
+  background: var(--background-color);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in oklch, var(--accent-color) 25%, transparent);
+}
+
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color 120ms ease;
+}
+
+.site-header {
+  padding-top: 2.5rem;
+}
+
+.channel-avatar {
+  width: 3.25rem;
+  height: 3.25rem;
+  box-shadow:
+    0 0 0 2px var(--background-color),
+    0 0 0 3px var(--accent-color);
+}
+
+.site-header > .title > h1 {
+  font-family: var(--font-main);
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.channel-description {
+  margin-top: 0.5rem;
+  color: var(--muted-color);
+  font-size: 0.92em;
+}
+
+.social-links a {
+  color: var(--muted-color);
+}
+
+.social-links a:hover {
+  color: var(--accent-color);
+}
+
+.site-navigation {
+  margin-top: 1rem;
+  border-block: 1px solid var(--border-color);
+}
+
+.site-navigation a[aria-current='page'] {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.desktop-search,
+.mobile-search form {
+  border-radius: 999px;
+  background: var(--surface-color);
+}
+
+.post-entry {
+  margin-bottom: 3rem;
+  padding-bottom: 3rem;
+  border-bottom: 0;
+  background: linear-gradient(var(--accent-color), var(--accent-color)) bottom center / 2.5rem 1px no-repeat;
+}
+
+.post-meta {
+  font-size: 0.78em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.post-meta a,
+body.feed .post-meta a:visited {
+  color: var(--muted-color);
+}
+
+.post-meta a::before {
+  content: '';
+  display: inline-block;
+  width: 1.25rem;
+  height: 1px;
+  margin-right: 0.6rem;
+  vertical-align: middle;
+  background: var(--accent-color);
+}
+
+.post-content {
+  padding-top: 0.75rem;
+  text-wrap: pretty;
+}
+
+.post-content blockquote {
+  margin-inline: 0;
+  padding: 0.25rem 0 0.25rem 1.1rem;
+  border-left: 2px solid var(--accent-color);
+  font-family: var(--font-main);
+  font-style: normal;
+}
+
+.post-content img:not(.tg-emoji):not(.sticker):not(.link_preview_image):not(.modal-img) {
+  border-radius: var(--radius-media);
+}
+
+.tgme_widget_message_link_preview {
+  border-radius: var(--radius-panel);
+  background: var(--surface-color);
+}
+
+.reaction {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-color);
+}
+
+.post-tags a {
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-chip);
+  background: color-mix(in oklch, var(--accent-color) 10%, transparent);
+  color: var(--accent-color);
+  font-size: 0.85em;
+  text-decoration: none;
+}
+
+.site-footer {
+  color: var(--muted-color);
+  font-size: 0.85em;
+}

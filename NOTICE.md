@@ -82,4 +82,13 @@ The optional `public/themes/polar.css` theme is an original BroadcastChannel des
 - License: [GNU Affero General Public License v3.0](https://github.com/ccbikai/BroadcastChannel/blob/main/LICENSE)
 - Nature: Original project-owned design and implementation; no external visual upstream
 
+## Beet Paper theme
+
+The optional `public/themes/beet-paper.css` theme is an original design made for the BeetMan/BroadcastChannel fork. It is independently implemented on BroadcastChannel's own DOM and contains no third-party theme source code, fonts, or assets; it uses only system font stacks.
+
+- Project: https://github.com/BeetMan/BroadcastChannel
+- Author and maintainer: BeetMan ([BeetMan](https://github.com/BeetMan))
+- License: [GNU Affero General Public License v3.0](https://github.com/BeetMan/BroadcastChannel/blob/main/LICENSE)
+- Nature: Original fork-owned design and implementation; no external visual upstream
+
 These are attribution and compatibility notices only. They do not imply endorsement by or official affiliation with Bear Blog, Planetable, hugo-theme-terminal, Aria Template, Y Combinator or Hacker News, Telegram Messenger Inc., or Zed Industries, Inc., and they do not change the licensing of BroadcastChannel under the root `LICENSE`.

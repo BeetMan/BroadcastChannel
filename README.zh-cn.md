@@ -63,6 +63,7 @@ Cloudflare Pages SSR 在当前 Astro 6 + @astrojs/cloudflare v13 下不受支持
 - 可选主题视觉灵感：[Telegram 公开频道预览](https://telegram.me/s/)（独立实现，与 Telegram Messenger Inc. 无官方关系）
 - 可选主题视觉灵感：[Zed 的 Agentic Engineering 页面](https://zed.dev/agentic-engineering)（独立实现，与 Zed Industries, Inc. 无官方关系）
 - 原创可选主题：Polar（项目自有设计，无外部视觉上游）
+- 原创可选主题：Beet Paper（本 fork 自有设计，无外部视觉上游）
 
 ## 🏗️ 部署
 
@@ -178,6 +179,7 @@ TARGET_WHITELIST=a.com,b.com
 | TG Channel       | `/themes/tg-channel.css`       |
 | ZAE              | `/themes/zae.css`              |
 | Polar            | `/themes/polar.css`            |
+| Beet Paper       | `/themes/beet-paper.css`       |
 
 ```env
 HEADER_INJECT='<link rel="stylesheet" href="/themes/polar.css">'
